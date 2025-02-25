@@ -1,0 +1,12 @@
+h1 Account Settings
+form action="/update_settings" method="post" enctype="multipart/form-data"
+  label for="username" Username:
+  input type="text" name="username" value=@user[:username] required
+
+  label for="password" New Password:
+  input type="password" name="password"
+
+  label for="profile_pic" Profile Picture:
+  input type="file" name="profile_pic"
+
+  input type="submit" value="Update Settings"

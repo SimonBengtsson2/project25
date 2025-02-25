@@ -1,0 +1,9 @@
+h1 Merge Cards
+p Combine three identical cards to upgrade them!
+
+form action="/merge" method="post"
+  label for="card_id" Select Card to Merge:
+  select name="card_id"
+    - @user_cards.each do |card|
+      option value=card[:card_id] = "#{card[:card_name]} (x#{card[:quantity]})"
+  input type="submit" value="Merge Cards"

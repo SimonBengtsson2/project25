@@ -1,0 +1,25 @@
+doctype html
+html
+  head
+    meta charset="UTF-8"
+    meta name="viewport" content="width=device-width, initial-scale=1.0"
+    title Card Collector
+    link rel="stylesheet" href="public\css\style.css"
+  body
+    nav
+      ul
+        li
+          a href="/" Home
+        li
+          a href="/merge" Merge
+        li
+          a href="/pack" Pack
+        li
+          a href="/collection" Collection
+        li
+          a href="/currency" Currency
+        li
+          a href="/settings" Settings
+
+    section.content
+      == yield

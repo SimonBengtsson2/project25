@@ -1,0 +1,8 @@
+h1 Your Collection
+p Browse your card collection below.
+
+div.collection
+  - @user_cards.each do |card|
+    div.card
+      img src="/img/cards/#{card[:image]}" alt="#{card[:card_name]}"
+      p = "#{card[:card_name]} (x#{card[:quantity]})"
