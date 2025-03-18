@@ -1,21 +1,19 @@
-h1 Buy Packs
-p You have #{@user_currency} in-game currency.
+h1 Pack Page
+p This is the pack page. Design your layout here.
 
-h2 Available Packs
-ul
-  li Standard Pack - 10 cards - 100 currency
-    form action="/buy_pack" method="post"
-      input type="hidden" name="pack_type" value="standard"
-      input type="submit" value="Buy"
-
-  li Premium Pack - 10 cards - 500 currency
-    form action="/buy_pack" method="post"
-      input type="hidden" name="pack_type" value="premium"
-      input type="submit" value="Buy"
-
-  li Free Pack (1 per hour)
-    - if @can_claim_free_pack
-      form action="/claim_free_pack" method="post"
-        input type="submit" value="Claim Free Pack"
-    - else
-      p You can claim your next free pack in #{@time_remaining} minutes.
+div.cards-container
+  div.card
+    img src="/img/EXtFG-pWAAAqwlZ.png" alt="Pack 1"
+    h2 Pack 1
+    p Description of Pack 1
+    button Open Pack
+  div.card
+    img src="/img/EXtFG-pWAAAqwlZ.png" alt="Pack 2"
+    h2 Pack 2
+    p Description of Pack 2
+    button Open Pack
+  div.card
+    img src="/img/EXtFG-pWAAAqwlZ.png" alt="Pack 3"
+    h2 Pack 3
+    p Description of Pack 3
+    button Open Pack
