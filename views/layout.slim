@@ -1,25 +1,34 @@
 doctype html
 html
   head
-    meta charset="UTF-8"
+    meta charset="utf-8"
     meta name="viewport" content="width=device-width, initial-scale=1.0"
     title Card Collector
-    link rel="stylesheet" href="public\css\style.css"
+    link rel="stylesheet" href="/css/style.css"
   body
-    nav
-      ul
-        li
-          a href="/" Home
-        li
-          a href="/merge" Merge
-        li
-          a href="/pack" Pack
-        li
-          a href="/collection" Collection
-        li
-          a href="/currency" Currency
-        li
-          a href="/settings" Settings
-
-    section.content
-      == yield
+    .parent
+      .div1
+        nav.main-nav
+          .div2
+            a href="/" Home
+          .div3
+            a href="/merge" Merge
+          .div4
+            a href="/pack" Packs
+          .div5
+            a href="/collection" Collection
+          .div6
+            a href="/currency" Currency
+          .div7.nav-item-dropdown
+            details.dropdown
+              summary.dropdown-trigger Profile
+              ul.dropdown-menu
+                li.dropdown-menu-item
+                  a href="#" Settings
+                li.dropdown-menu-item
+                  a href="#" Login
+                li.dropdown-menu-item
+                  a href="#" Logout
+      .div9
+        section.content
+          == yield

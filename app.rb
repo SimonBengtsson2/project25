@@ -12,18 +12,16 @@ DB.results_as_hash = true
 
 # Home route
 get '/' do
-  slim :home
+  slim :home, layout: :layout
 end
 
 # Merge route
 get '/merge' do
-  redirect '/login' unless session[:user_id]
   @user_cards = DB.execute("SELECT * FROM user_cards WHERE user_id = ?", session[:user_id])
-  slim :merge
+  slim :merge, layout: :layout
 end
 
 post '/merge' do
-  redirect '/login' unless session[:user_id]
   card_id = params[:card_id].to_i
 
   # Check if the user has at least 3 of this card
@@ -39,13 +37,11 @@ end
 
 # Pack route
 get '/pack' do
-  redirect '/login' unless session[:user_id]
   @user_currency = DB.execute("SELECT currency FROM users WHERE id = ?", session[:user_id]).first['currency']
-  slim :pack
+  slim :pack, layout: :layout
 end
 
 post '/buy_pack' do
-  redirect '/login' unless session[:user_id]
   pack_type = params[:pack_type]
   cost = pack_type == 'standard' ? 100 : 500
   user_currency = DB.execute("SELECT currency FROM users WHERE id = ?", session[:user_id]).first['currency']
@@ -60,20 +56,17 @@ end
 
 # Collection route
 get '/collection' do
-  redirect '/login' unless session[:user_id]
   @user_cards = DB.execute("SELECT * FROM user_cards WHERE user_id = ?", session[:user_id])
-  slim :collection
+  slim :collection, layout: :layout
 end
 
 # Currency route
 get '/currency' do
-  redirect '/login' unless session[:user_id]
   @user_currency = DB.execute("SELECT currency FROM users WHERE id = ?", session[:user_id]).first['currency']
-  slim :currency
+  slim :currency, layout: :layout
 end
 
 post '/buy_currency' do
-  redirect '/login' unless session[:user_id]
   amount = params[:amount].to_i
   DB.execute("UPDATE users SET currency = currency + ? WHERE id = ?", amount, session[:user_id])
   redirect '/currency'
@@ -81,13 +74,11 @@ end
 
 # Settings route
 get '/settings' do
-  redirect '/login' unless session[:user_id]
   @user = DB.execute("SELECT * FROM users WHERE id = ?", session[:user_id]).first
-  slim :settings
+  slim :settings, layout: :layout
 end
 
 post '/update_settings' do
-  redirect '/login' unless session[:user_id]
   username = params[:username]
   password = params[:password]
   profile_pic = params[:profile_pic]
@@ -100,39 +91,4 @@ post '/update_settings' do
   end
 
   redirect '/settings'
-end
-
-# Login & Authentication
-get '/login' do
-  slim :login
-end
-
-post '/login' do
-  username = params[:username]
-  password = params[:password]
-
-  user = DB.execute("SELECT * FROM users WHERE username = ?", username).first
-  if user && BCrypt::Password.new(user['password']) == password
-    session[:user_id] = user['id']
-    redirect '/'
-  else
-    redirect '/login'
-  end
-end
-
-get '/logout' do
-  session.clear
-  redirect '/'
-end
-
-# Register route
-get '/register' do
-  slim :register
-end
-
-post '/register' do
-  username = params[:username]
-  password = BCrypt::Password.create(params[:password])
-  DB.execute("INSERT INTO users (username, password, currency) VALUES (?, ?, ?)", username, password, 0)
-  redirect '/login'
 end

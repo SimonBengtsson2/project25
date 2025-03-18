@@ -1,176 +1,165 @@
-/* General Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root {
+    --button-background: #444;
+    --button-color: white;
+    
+    --dropdown-highlight: #555;
+    --dropdown-width: 160px;
+    --dropdown-background: #444;
+    --dropdown-color: white;
 }
 
 body {
+    margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #222;
-    color: white;
-    text-align: center;
-    padding-bottom: 50px;
 }
 
-/* Navigation Bar */
-nav {
+.parent {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.div1 {
+    grid-area: 1 / 1 / 2 / 8;
     background-color: #333;
     padding: 10px;
     display: flex;
-    justify-content: center;
-    gap: 15px;
+    justify-content: space-between;
 }
 
-nav a {
+.main-nav {
+    display: flex;
+}
+
+.div2, .div3, .div4, .div5, .div6, .div7, .div8 {
+    display: inline-block;
+    background-color: #444;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    position: relative; /* Ensure the dropdown menu is positioned relative to its parent */
+}
+
+.div2 a, .div3 a, .div4 a, .div5 a, .div6 a, .div7 a, .div8 a {
     color: white;
     text-decoration: none;
-    font-size: 18px;
-    padding: 8px 12px;
-    border-radius: 5px;
-    transition: 0.3s;
+    display: block;
 }
 
-nav a:hover {
+.div2 a:hover, .div3 a:hover, .div4 a:hover, .div5 a:hover, .div6 a:hover, .div7 a:hover, .div8 a:hover {
     background-color: #555;
 }
 
-/* Buttons */
-.button {
-    display: inline-block;
-    padding: 12px 20px;
-    margin: 15px;
-    font-size: 18px;
+.div9 {
+    grid-area: 2 / 1 / 6 / 8;
+    padding: 20px;
+}
+
+.nav-item-dropdown {
+    position: relative;
+}
+
+/* Dropdown styling */
+.dropdown {
+    position: relative;
+    padding: 0;
+    margin-right: 1em;
+    border: none;
+}
+
+/* Styling for the summary element of the dropdown */
+.dropdown summary {
+    list-style: none;
     color: white;
-    background-color: #28a745;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: 0.3s;
-}
-
-.button:hover {
-    background-color: #218838;
-}
-
-/* Main Content */
-main {
-    margin-top: 50px;
-}
-
-h1 {
-    font-size: 36px;
-    margin-bottom: 15px;
-}
-
-p {
-    font-size: 18px;
-    margin-bottom: 20px;
-}
-
-/* Cards Layout */
-.card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.card {
+    display: block;
+    padding: 10px;
     background-color: #444;
-    padding: 15px;
-    border-radius: 10px;
-    width: 150px;
-    text-align: center;
-    transition: 0.3s;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+    text-decoration: none;
 }
 
-.card img {
+/* Remove the default marker for details element */
+.dropdown > summary::-webkit-details-marker {
+    display: none;
+}
+
+.dropdown summary:focus {
+    outline: none;
+}
+
+/* Dropdown menu styling */
+.dropdown ul {
+    position: absolute;
+    margin: 10px 0 0 0;
+    padding: 10px 0;
+    width: var(--dropdown-width);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    background: var(--dropdown-background);
+    border-radius: 6px;
+    list-style: none;
+    display: none;
+}
+
+/* Show dropdown menu when open */
+.dropdown[open] > ul {
+    display: block;
+}
+
+.dropdown ul li {
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown ul li a:link, .dropdown ul li a:visited {
+    display: block;
+    padding: 10px 0.8rem;
     width: 100%;
-    border-radius: 5px;
+    box-sizing: border-box;
+    color: var(--dropdown-color);
+    text-decoration: none;
 }
 
-.card:hover {
-    transform: scale(1.05);
+.dropdown ul li a:hover {
+    background-color: var(--dropdown-highlight);
+    color: var(--dropdown-background);
 }
 
-/* Pack Opening */
-.pack-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
+.dropdown ul::before {
+    content: ' ';
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+    border-width: 0 10px 10px 10px;
+    border-color: transparent transparent var(--dropdown-background) transparent;
 }
 
-.pack {
-    background-color: #666;
-    padding: 15px;
-    border-radius: 10px;
+.dropdown-menu-item {
     cursor: pointer;
-    transition: 0.3s;
-}
-
-.pack:hover {
-    background-color: #888;
-}
-
-/* Merge Cards */
-.merge-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.merge-button {
-    padding: 10px 20px;
-    background-color: #d9534f;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.merge-button:hover {
-    background-color: #c9302c;
-}
-
-/* User Settings */
-.settings-container {
-    margin-top: 20px;
-}
-
-input[type="text"],
-input[type="password"],
-input[type="file"] {
-    padding: 10px;
-    margin: 5px 0;
-    width: 250px;
-    border: 1px solid #777;
-    border-radius: 5px;
-}
-
-.settings-button {
-    background-color: #17a2b8;
-    padding: 10px 20px;
-    border: none;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.settings-button:hover {
-    background-color: #138496;
-}
-
-/* Footer */
-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    padding: 10px;
-    background-color: #333;
+    padding: 1em;
     text-align: center;
+}
+
+.dropdown-menu-item a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 15px;
+}
+
+.dropdown-menu-item:hover {
+    background-color: #555;
+}
+
+.content {
+    padding: 20px;
 }

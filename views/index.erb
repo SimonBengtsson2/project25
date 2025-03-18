@@ -1,7 +1,0 @@
-<h1>Welcome</h1>
-<% if logged_in? %>
-  <p>Hello, <%= current_user['username'] %>!</p>
-  <a href="/logout">Logout</a>
-<% else %>
-  <a href="/login">Login</a> | <a href="/register">Register</a>
-<% end %>
