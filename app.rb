@@ -22,8 +22,7 @@ end
 
 # Merge route
 get '/merge' do
-  @user_cards = DB.execute("SELECT * FROM Collection WHERE user_id = ?", session[:user_id])
-  slim :merge, layout: :layout
+  @user_cards = DB.execute("SELECT collection_id, card_id, quantity FROM Collection WHERE user_id = ?", session[:user_id])
 end
 
 post '/merge' do
@@ -32,9 +31,8 @@ post '/merge' do
   # Check if the user has at least 3 of this card
   card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", session[:user_id], card_id).first
   if card && card['quantity'] >= 3
-    new_stars = card['stars'] + 1
     DB.execute("UPDATE Collection SET quantity = quantity - 2 WHERE user_id = ? AND card_id = ?", session[:user_id], card_id)
-    DB.execute("UPDATE Collection SET stars = ? WHERE user_id = ? AND card_id = ?", new_stars, session[:user_id], card_id)
+  end
   end
 
   redirect '/merge'
