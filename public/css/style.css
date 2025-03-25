@@ -208,6 +208,8 @@ body {
     margin: 0 0 10px;
 }
 
+
+
 .card p {
     margin: 0 0 20px;
 }
@@ -223,4 +225,35 @@ body {
 
 .card button:hover {
     background-color: var(--dropdown-highlight);
+}
+
+
+.merge-layout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 20px; /* Space between the cards and arrows */
+}
+
+.merge-layout .card {
+    width: 150px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.merge-layout .card img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+}
+
+.merge-layout .arrow img {
+    width: 50px;
+    height: auto;
 }
