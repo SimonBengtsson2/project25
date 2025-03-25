@@ -1,14 +1,9 @@
 h1 Merge Cards
 p Combine three identical cards to upgrade them!
 
-div.merge-layout
-  div.card
-    img src="/img/card1.png" alt="Card 1"
-  div.arrow
-    img src="/img/arrow.png" alt="Arrow"
-  div.card
-    img src="/img/card2.png" alt="Card 2"
-  div.arrow
-    img src="/img/arrow.png" alt="Arrow"
-  div.card
-    img src="/img/card3.png" alt="Result Card"
+form action="/merge" method="post"
+  label for="card_id" Select a card to merge:
+  select name="card_id"
+    - @user_cards.each do |card|
+      option value=card['card_id'] = "#{card['card_id']} - #{card['quantity']} available"
+  input type="submit" value="Merge Cards"
