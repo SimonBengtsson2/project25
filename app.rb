@@ -40,12 +40,14 @@ post '/merge' do
 end
 
 
-# Collection route
 get '/collection' do
-  @user_cards = DB.execute("SELECT * FROM Collection WHERE user_id = ?", 1) # Hardcoded user_id = 1
+  @user_cards = DB.execute("
+    SELECT Collection.quantity, Card.card_name, Card.picture
+    FROM Collection
+    JOIN Card ON Collection.card_id = Card.card_id
+    WHERE Collection.user_id = ?", 1) # Replace 1 with the appropriate user_id
   slim :collection, layout: :layout
 end
-
 # Currency route
 get '/currency' do
   @user_currency = DB.execute("SELECT currency FROM User WHERE user_id = ?", 1).first['currency'] # Hardcoded user_id = 1

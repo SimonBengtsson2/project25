@@ -1,8 +1,9 @@
-h1 Your Collection
-p Browse your card collection below.
+h1 Collection
+p View all your collected cards below.
 
-div.collection
+div.collection-container
   - @user_cards.each do |card|
-    div.card
-      img src="/img/cards/#{card[:image]}" alt="#{card[:card_name]}"
-      p = "#{card[:card_name]} (x#{card[:quantity]})"
+    div.collection-card
+      img src=card['picture'] alt=card['name']
+      h3 = card['name']
+      div.quantity-circle = card['quantity']
