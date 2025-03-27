@@ -2,8 +2,11 @@ h1 Collection
 p View all your collected cards below.
 
 div.collection-container
-  - @user_cards.each do |card|
-    div.collection-card
-      img src=card['picture'] alt=card['name']
-      h3 = card['name']
-      div.quantity-circle = card['quantity']
+  - @cards.group_by { |card| card['card_name'].match(/^[a-zA-Z]+/)[0].downcase }.each do |character_name, cards|
+    h2 = character_name.capitalize
+    div.character-row
+      - cards.sort_by { |card| card['stars'] }.each do |card| # Sort cards by stars
+        div.collection-card
+          img src="#{card['picture']}" alt="#{card['card_name']}"
+          h3 = card['card_name']
+          p Stars: #{card['stars']}

@@ -1,14 +1,28 @@
 h1 Merge Cards
 p Combine three identical cards to upgrade them!
 
-div.merge-layout
-  div.card
-    img src="/img/card1.png" alt="Card 1"
-  div.arrow
-    img src="/img/arrowright.png" alt="Arrow Right" class="arrow-right"
-  div.card
-    img src="/img/card2.png" alt="Center Card"
-  div.arrow
-    img src="/img/arrowleft.png" alt="Arrow Left" class="arrow-left"
-  div.card
-    img src="/img/card3.png" alt="Card 3"
+form action="/merge" method="post"
+  div.merge-layout
+    div.card
+      img src="/img/card1.png" alt="Card 1" class="merge-card"
+      select name="card_id_1"
+        option value="" disabled selected Select Card
+        - @user_cards.each do |card|
+          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+    div.arrow
+      img src="/img/arrowright.png" alt="Arrow Right" class="arrow-right"
+    div.card
+      img src="/img/card2.png" alt="Center Card" class="merge-card"
+      select name="card_id_2"
+        option value="" disabled selected Select Card
+        - @user_cards.each do |card|
+          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+    div.arrow
+      img src="/img/arrowleft.png" alt="Arrow Left" class="arrow-left"
+    div.card
+      img src="/img/card3.png" alt="Card 3" class="merge-card"
+      select name="card_id_3"
+        option value="" disabled selected Select Card
+        - @user_cards.each do |card|
+          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+  button type="submit" Merge

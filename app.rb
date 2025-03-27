@@ -21,44 +21,63 @@ get '/pack' do
 end
 # Merge route
 get '/merge' do
-  @user_cards = DB.execute("SELECT * FROM Collection WHERE user_id = ?", 1) # Hardcoded user_id = 1
-  slim :merge, layout: :layout
-end
-
-post '/merge' do
-  card_id = params[:card_id].to_i
-
-  # Check if the user has at least 3 of this card
-  card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", 1, card_id).first # Hardcoded user_id = 1
-  if card && card['quantity'] >= 3
-    new_stars = card['stars'] + 1
-    DB.execute("UPDATE Collection SET quantity = quantity - 2 WHERE user_id = ? AND card_id = ?", 1, card_id) # Hardcoded user_id = 1
-    DB.execute("UPDATE Collection SET stars = ? WHERE user_id = ? AND card_id = ?", new_stars, 1, card_id) # Hardcoded user_id = 1
-  end
-
-  redirect '/merge'
-end
-
-
-get '/collection' do
+  # Fetch all cards in user3's collection
   @user_cards = DB.execute("
-    SELECT Collection.quantity, Card.card_name, Card.picture
+    SELECT Collection.card_id, Collection.quantity, Card.card_name, Card.stars, Card.picture
     FROM Collection
     JOIN Card ON Collection.card_id = Card.card_id
-    WHERE Collection.user_id = ?", 1) # Replace 1 with the appropriate user_id
-  slim :collection, layout: :layout
+    WHERE Collection.user_id = ?", 3) # Hardcoded user_id = 3
+
+  slim :merge, layout: :layout
 end
-# Currency route
-get '/currency' do
-  @user_currency = DB.execute("SELECT currency FROM User WHERE user_id = ?", 1).first['currency'] # Hardcoded user_id = 1
-  slim :currency, layout: :layout
+post '/merge' do
+  card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
+
+  # Ensure all selected cards are the same
+  cards = DB.execute("SELECT * FROM Card WHERE card_id IN (?, ?, ?)", *card_ids)
+  halt 400, "You must select three identical cards to merge" unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
+
+  card = cards.first
+
+  # Check if the user has enough cards
+  user_card = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", card['card_id'], 3).first
+  halt 400, "Not enough cards to merge" unless user_card && user_card['quantity'] >= 3
+
+  # Deduct 3 cards from the user's collection
+  DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", card['card_id'], 3)
+
+  # Check if the next tier card exists
+  next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", card['card_name'], card['stars'] + 1).first
+  if next_tier_card
+    # Add the next tier card to the user's collection
+    existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", next_tier_card['card_id'], 3).first
+    if existing_next_tier
+      DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", next_tier_card['card_id'], 3)
+    else
+      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", 3, next_tier_card['card_id'])
+    end
+  else
+    halt 400, "Next tier card does not exist"
+  end
+
+  # Pass data to the view for animation
+  @merged_cards = [card] * 3
+  @result_card = next_tier_card
+
+  slim :merge_result, layout: :layout
 end
 
-post '/buy_currency' do
-  amount = params[:amount].to_i
-  DB.execute("UPDATE User SET currency = currency + ? WHERE user_id = ?", amount, 1) # Hardcoded user_id = 1
-  redirect '/currency'
+get '/collection' do
+  # Query to get all cards from the database
+  cards = DB.execute("SELECT * FROM Card ORDER BY card_name")
+
+  # Pass the cards to the view
+  @cards = cards
+
+  slim :collection, layout: :layout
 end
+
+
 
 
 # Settings route
