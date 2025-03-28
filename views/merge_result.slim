@@ -1,0 +1,16 @@
+h1 Merge Result
+p You successfully merged the following cards:
+
+div.merging-cards
+  - @merged_cards.each do |card|
+    div.card
+      img src="#{card['picture']}" alt="#{card['card_name']}"
+      h3 = card['card_name']
+      p Stars: #{card['stars']}
+
+p Resulting card:
+
+div.result-card
+  img src="#{@result_card['picture']}" alt="#{@result_card['card_name']}"
+  h3 = @result_card['card_name']
+  p Stars: #{@result_card['stars']}

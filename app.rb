@@ -47,18 +47,19 @@ post '/merge' do
   # Deduct 3 cards from the user's collection
   DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", [card['card_id'], 3])
 
-  # Check if the next tier card exists
+  # Fetch the next-tier card
   next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
-  if next_tier_card
-    # Add the next tier card to the user's collection
-    existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3]).first
-    if existing_next_tier
-      DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3])
-    else
-      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [3, next_tier_card['card_id']])
-    end
+  if next_tier_card.nil?
+    # If the next-tier card does not exist, create it dynamically (optional)
+    halt 400, "Next tier card does not exist. Please ensure the next-tier card is available in the database."
+  end
+
+  # Add the next-tier card to the user's collection
+  existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3]).first
+  if existing_next_tier
+    DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3])
   else
-    halt 400, "Next tier card does not exist"
+    DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [3, next_tier_card['card_id']])
   end
 
   # Pass data to the view for animation
