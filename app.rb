@@ -34,27 +34,28 @@ post '/merge' do
   card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
 
   # Ensure all selected cards are the same
-  cards = DB.execute("SELECT * FROM Card WHERE card_id IN (?, ?, ?)", *card_ids)
+  placeholders = (["?"] * card_ids.size).join(", ") # Dynamically create placeholders (?, ?, ?)
+  cards = DB.execute("SELECT * FROM Card WHERE card_id IN (#{placeholders})", card_ids)
   halt 400, "You must select three identical cards to merge" unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
 
   card = cards.first
 
   # Check if the user has enough cards
-  user_card = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", card['card_id'], 3).first
+  user_card = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [card['card_id'], 3]).first
   halt 400, "Not enough cards to merge" unless user_card && user_card['quantity'] >= 3
 
   # Deduct 3 cards from the user's collection
-  DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", card['card_id'], 3)
+  DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", [card['card_id'], 3])
 
   # Check if the next tier card exists
-  next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", card['card_name'], card['stars'] + 1).first
+  next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
   if next_tier_card
     # Add the next tier card to the user's collection
-    existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", next_tier_card['card_id'], 3).first
+    existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3]).first
     if existing_next_tier
-      DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", next_tier_card['card_id'], 3)
+      DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3])
     else
-      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", 3, next_tier_card['card_id'])
+      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [3, next_tier_card['card_id']])
     end
   else
     halt 400, "Next tier card does not exist"
@@ -66,7 +67,6 @@ post '/merge' do
 
   slim :merge_result, layout: :layout
 end
-
 get '/collection' do
   # Query to get all cards from the database
   cards = DB.execute("SELECT * FROM Card ORDER BY card_name")
