@@ -8,25 +8,27 @@ p Combine three identical cards to upgrade them!
 form action="/merge" method="post"
   div.merge-layout
     div.card
-      img src="/img/card1.png" alt="Card 1" class="merge-card"
-      select name="card_id_1"
+      img src="/img/placeholder.png" alt="Card 1" class="merge-card" id="card-image-1"
+      select name="card_id_1" id="card-select-1" data-image-target="card-image-1"
         option value="" disabled selected Select Card
         - @user_cards.each do |card|
-          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+          option value="#{card['card_id']}" data-image="#{card['picture']}" = "#{card['card_name']} (#{card['stars']} stars)"
     div.arrow
       img src="/img/arrowright.png" alt="Arrow Right" class="arrow-right"
     div.card
-      img src="/img/card2.png" alt="Card 2" class="merge-card"
-      select name="card_id_2"
+      img src="/img/placeholder.png" alt="Card 2" class="merge-card" id="card-image-2"
+      select name="card_id_2" id="card-select-2" data-image-target="card-image-2"
         option value="" disabled selected Select Card
         - @user_cards.each do |card|
-          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+          option value="#{card['card_id']}" data-image="#{card['picture']}" = "#{card['card_name']} (#{card['stars']} stars)"
     div.arrow
       img src="/img/arrowleft.png" alt="Arrow Left" class="arrow-left"
     div.card
-      img src="/img/card3.png" alt="Card 3" class="merge-card"
-      select name="card_id_3"
+      img src="/img/placeholder.png" alt="Card 3" class="merge-card" id="card-image-3"
+      select name="card_id_3" id="card-select-3" data-image-target="card-image-3"
         option value="" disabled selected Select Card
         - @user_cards.each do |card|
-          option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
-  button type="submit" Merge
+          option value="#{card['card_id']}" data-image="#{card['picture']}" = "#{card['card_name']} (#{card['stars']} stars)"
+
+  div.merge-button-container
+    button type="submit" class="merge-button" Merge

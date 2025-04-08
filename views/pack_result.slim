@@ -1,11 +1,16 @@
 h1 Pack Result
 p You received the following cards:
 
-div.pack-result-container
+div.pack-result-deck
   - @new_cards.each do |card|
-    div.card
-      img src="#{card['picture']}" alt="#{card['card_name']}"
-      h3 = card['card_name']
-      p Stars: #{card['stars']}
+    div.pack-result-card
+      header.pack-result-card-header
+      
+      div.pack-result-card-body
+        img src="#{card['picture']}" alt="#{card['card_name']}" style="width: 100%; height: auto;"
+      footer.pack-result-card-footer
+      
+
+p.pack-result-body-message Click stack to remove a card, click anywhere else to add more cards.
 
 a href="/pack" Back to Packs
