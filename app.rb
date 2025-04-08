@@ -77,48 +77,64 @@ post '/open_pack' do
 end
 # Merge route
 get '/merge' do
-  # Fetch all cards in user3's collection
+  # Fetch all cards in the user's collection
   @user_cards = DB.execute("
-    SELECT Collection.card_id, Collection.quantity, Card.card_name, Card.stars, Card.picture
+    SELECT Collection.card_id, Card.card_name, Card.stars, Card.picture
     FROM Collection
     JOIN Card ON Collection.card_id = Card.card_id
-    WHERE Collection.user_id = ?", 3) # Hardcoded user_id = 3
+    WHERE Collection.user_id = ?
+    ORDER BY Card.card_name", session[:user_id]) # Use the logged-in user's ID
 
+  @error = session.delete(:error) # Retrieve and clear the error message
   slim :merge, layout: :layout
 end
+
 post '/merge' do
+  # Retrieve the selected card IDs from the form
   card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
 
   # Ensure all selected cards are the same
   placeholders = (["?"] * card_ids.size).join(", ") # Dynamically create placeholders (?, ?, ?)
   cards = DB.execute("SELECT * FROM Card WHERE card_id IN (#{placeholders})", card_ids)
-  halt 400, "You must select three identical cards to merge" unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
+  unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
+    session[:error] = "You must select three identical cards to merge."
+    redirect '/merge'
+  end
 
   card = cards.first
 
-  # Check if the user has enough cards
-  user_card = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [card['card_id'], 3]).first
-  halt 400, "Not enough cards to merge" unless user_card && user_card['quantity'] >= 3
+  # Check if the user owns the selected cards and has enough quantity
+  card_ids.each do |card_id|
+    user_card = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [card_id, session[:user_id]]).first
+    unless user_card
+      session[:error] = "You do not own the selected cards."
+      redirect '/merge'
+    end
+    if user_card['quantity'] < 3
+      session[:error] = "You do not have enough of the selected card to merge. You need at least 3."
+      redirect '/merge'
+    end
+  end
 
-  # Deduct 3 cards from the user's collection
-  DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", [card['card_id'], 3])
+  # Deduct 3 cards for the selected card from the user's collection
+  DB.execute("UPDATE Collection SET quantity = quantity - 3 WHERE card_id = ? AND user_id = ?", [card_ids.first, session[:user_id]])
 
   # Fetch the next-tier card
   next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
   if next_tier_card.nil?
-    # If the next-tier card does not exist, create it dynamically (optional)
-    halt 400, "Next tier card does not exist. Please ensure the next-tier card is available in the database."
+    session[:error] = "Next tier card does not exist. Please ensure the next-tier card is available in the database."
+    redirect '/merge'
   end
 
   # Add the next-tier card to the user's collection
-  existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3]).first
+  existing_next_tier = DB.execute("SELECT * FROM Collection WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], session[:user_id]]).first
   if existing_next_tier
-    DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], 3])
+    DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE card_id = ? AND user_id = ?", [next_tier_card['card_id'], session[:user_id]])
   else
-    DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [3, next_tier_card['card_id']])
+    DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [session[:user_id], next_tier_card['card_id']])
   end
 
-  # Pass data to the view for animation
+  # Pass data to the view for animation or confirmation
   @merged_cards = [card] * 3
   @result_card = next_tier_card
 
@@ -127,7 +143,7 @@ end
 get '/collection' do
   # Query to get all cards in the user's collection
   cards = DB.execute("
-    SELECT Card.*, Collection.quantity
+    SELECT Card.*, COALESCE(Collection.quantity, 0) AS quantity
     FROM Card
     LEFT JOIN Collection ON Card.card_id = Collection.card_id AND Collection.user_id = ?", session[:user_id])
 

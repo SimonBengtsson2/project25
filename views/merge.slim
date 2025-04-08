@@ -1,6 +1,10 @@
 h1 Merge Cards
 p Combine three identical cards to upgrade them!
 
+- if @error
+  div.error-message
+    p = @error
+
 form action="/merge" method="post"
   div.merge-layout
     div.card
@@ -12,7 +16,7 @@ form action="/merge" method="post"
     div.arrow
       img src="/img/arrowright.png" alt="Arrow Right" class="arrow-right"
     div.card
-      img src="/img/card2.png" alt="Center Card" class="merge-card"
+      img src="/img/card2.png" alt="Card 2" class="merge-card"
       select name="card_id_2"
         option value="" disabled selected Select Card
         - @user_cards.each do |card|
