@@ -4,30 +4,37 @@ html
     meta charset="utf-8"
     meta name="viewport" content="width=device-width, initial-scale=1.0"
     title Card Collector
-    link rel="stylesheet" href="css/style.css"
+    link rel="stylesheet" href="/css/style.css"
   body
     .parent
       .div1
         nav.main-nav
           .div2
             a href="/" Home
-          .div3
-            a href="/merge" Merge
-          .div4
-            a href="/pack" Packs
-          .div5
-            a href="/collection" Collection
-        
-          .div7.nav-item-dropdown
-            details.dropdown
-              summary.dropdown-trigger Profile
-              ul.dropdown-menu
-                li.dropdown-menu-item
-                  a href="#" Settings
-                li.dropdown-menu-item
-                  a href="#" Login
-                li.dropdown-menu-item
-                  a href="#" Logout
+          - if session[:user_id]
+            .div3
+              a href="/merge" Merge
+            .div4
+              a href="/pack" Packs
+            .div5
+              a href="/collection" Collection
+            .div7.nav-item-dropdown
+              details.dropdown
+                summary.dropdown-trigger Profile
+                ul.dropdown-menu
+                  li.dropdown-menu-item
+                    a href="/settings" Settings
+                  li.dropdown-menu-item
+                    a href="/logout" Logout
+          - else
+            .div7.nav-item-dropdown
+              details.dropdown
+                summary.dropdown-trigger Profile
+                ul.dropdown-menu
+                  li.dropdown-menu-item
+                    a href="/login" Login
+                  li.dropdown-menu-item
+                    a href="/register" Register
       .div9
         section.content
           == yield

@@ -14,10 +14,66 @@ DB.results_as_hash = true
 get '/' do
   slim :home, layout: :layout
 end
+before '/collection' do
+  redirect '/login' unless session[:user_id]
+end
 
+before '/merge' do
+  redirect '/login' unless session[:user_id]
+end
 # Pack route
 get '/pack' do
   slim :pack, layout: :layout
+end
+
+post '/open_pack' do
+  redirect '/login' unless session[:user_id]
+
+  # Define probabilities for each star level
+  probabilities = {
+    1 => 60, # 60% chance for 1-star cards
+    2 => 25, # 25% chance for 2-star cards
+    3 => 10, # 10% chance for 3-star cards
+    4 => 4,  # 4% chance for 4-star cards
+    5 => 1   # 1% chance for 5-star cards
+  }
+
+  # Normalize probabilities
+  total_probability = probabilities.values.sum
+  normalized_probabilities = probabilities.transform_values { |v| v.to_f / total_probability }
+
+  # Fetch all cards from the database
+  all_cards = DB.execute("SELECT * FROM Card")
+
+  # Generate 10 random cards
+  random_cards = 10.times.map do
+    # Randomly select a star level based on probabilities
+    random_star = probabilities.keys.find do |star|
+      rand < normalized_probabilities[star]
+    end
+
+    # Select a random card with the chosen star level
+    eligible_cards = all_cards.select { |card| card['stars'] == random_star }
+
+    # If no cards are found for the selected star level, skip this iteration
+    next if eligible_cards.empty?
+
+    eligible_cards.sample
+  end.compact # Remove any nil values in case no cards were found
+
+  # Add the cards to the user's collection
+  random_cards.each do |card|
+    existing_card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [session[:user_id], card['card_id']]).first
+    if existing_card
+      DB.execute("UPDATE Collection SET quantity = quantity + 1 WHERE user_id = ? AND card_id = ?", [session[:user_id], card['card_id']])
+    else
+      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, 1)", [session[:user_id], card['card_id']])
+    end
+  end
+
+  # Pass the cards to the view
+  @new_cards = random_cards
+  slim :pack_result, layout: :layout
 end
 # Merge route
 get '/merge' do
@@ -69,8 +125,11 @@ post '/merge' do
   slim :merge_result, layout: :layout
 end
 get '/collection' do
-  # Query to get all cards from the database
-  cards = DB.execute("SELECT * FROM Card ORDER BY card_name")
+  # Query to get all cards in the user's collection
+  cards = DB.execute("
+    SELECT Card.*, Collection.quantity
+    FROM Card
+    LEFT JOIN Collection ON Card.card_id = Collection.card_id AND Collection.user_id = ?", session[:user_id])
 
   # Pass the cards to the view
   @cards = cards
@@ -78,21 +137,88 @@ get '/collection' do
   slim :collection, layout: :layout
 end
 
+# Registration route
+get '/register' do
+  slim :register, layout: :layout
+end
 
-
-
-# Settings route
-post '/update_settings' do
+post '/register' do
   username = params[:username]
   password = params[:password]
-  profile_pic = params[:profile_pic]
+  profile_picture = params[:profile_picture]
+
+  # Hash the password using BCrypt
+  hashed_password = BCrypt::Password.create(password)
+
+  # Insert the new user into the database
+  begin
+    DB.execute("INSERT INTO User (username, password, profile_picture) VALUES (?, ?, ?)", [username, hashed_password, profile_picture])
+    redirect '/login'
+  rescue SQLite3::ConstraintException
+    @error = "Username already exists."
+    slim :register, layout: :layout
+  end
+end
+# Login route
+get '/login' do
+  slim :login, layout: :layout
+end
+
+post '/login' do
+  username = params[:username]
+  password = params[:password]
+
+  # Fetch the user from the database
+  user = DB.execute("SELECT * FROM User WHERE username = ?", [username]).first
+
+  if user && BCrypt::Password.new(user['password']) == password
+    session[:user_id] = user['user_id']
+    redirect '/collection'
+  else
+    @error = "Invalid username or password."
+    slim :login, layout: :layout
+  end
+end
+
+# Logout route
+get '/logout' do
+  session.clear
+  redirect '/login'
+end
+
+# Settings route
+get '/settings' do
+  redirect '/login' unless session[:user_id]
+
+  @user = DB.execute("SELECT * FROM User WHERE user_id = ?", [session[:user_id]]).first
+  slim :settings, layout: :layout
+end
+
+post '/update_settings' do
+  redirect '/login' unless session[:user_id]
+
+  username = params[:username]
+  password = params[:password]
+  profile_picture = params[:profile_picture]
 
   if password.strip != ''
     hashed_password = BCrypt::Password.create(password)
-    DB.execute("UPDATE User SET username = ?, password = ? WHERE user_id = ?", username, hashed_password, 1) # Hardcoded user_id = 1
+    DB.execute("UPDATE User SET username = ?, password = ?, profile_picture = ? WHERE user_id = ?", [username, hashed_password, profile_picture, session[:user_id]])
   else
-    DB.execute("UPDATE User SET username = ? WHERE user_id = ?", username, 1) # Hardcoded user_id = 1
+    DB.execute("UPDATE User SET username = ?, profile_picture = ? WHERE user_id = ?", [username, profile_picture, session[:user_id]])
   end
 
   redirect '/settings'
+end
+
+
+post '/delete_user' do
+  redirect '/login' unless session[:user_id]
+
+  # Delete the user from the database
+  DB.execute("DELETE FROM User WHERE user_id = ?", [session[:user_id]])
+
+  # Clear the session and redirect to the login page
+  session.clear
+  redirect '/login'
 end

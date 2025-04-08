@@ -1,0 +1,11 @@
+h1 Pack Result
+p You received the following cards:
+
+div.pack-result-container
+  - @new_cards.each do |card|
+    div.card
+      img src="#{card['picture']}" alt="#{card['card_name']}"
+      h3 = card['card_name']
+      p Stars: #{card['stars']}
+
+a href="/pack" Back to Packs

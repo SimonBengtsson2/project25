@@ -1,12 +1,15 @@
-h1 Login
+h1 Register
 - if @error
   p.error = @error
 
-form action="/login" method="post"
+form action="/register" method="post"
   label for="username" Username:
   input type="text" name="username" id="username" required
 
   label for="password" Password:
   input type="password" name="password" id="password" required
 
-  button type="submit" Login
+  label for="profile_picture" Profile Picture URL (optional):
+  input type="text" name="profile_picture" id="profile_picture"
+
+  button type="submit" Register
