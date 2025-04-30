@@ -14,28 +14,30 @@ html
             a href="/" Home
           - if session[:user_id]
             .div3
-              a href="/merge" Merge
+              a href="/cards/merge" Merge
             .div4
-              a href="/pack" Packs
+              a href="/packs/new" Packs
             .div5
-              a href="/collection" Collection
+              a href="/cards" Collection
             .div7.nav-item-dropdown
               details.dropdown
                 summary.dropdown-trigger Profile
                 ul.dropdown-menu
                   li.dropdown-menu-item
-                    a href="/settings" Settings
+                    a href="/users/edit" Settings
                   li.dropdown-menu-item
-                    a href="/logout" Logout
+                    form action="/sessions" method="post"
+                      input type="hidden" name="_method" value="delete"
+                      button type="submit" Logout
           - else
             .div7.nav-item-dropdown
               details.dropdown
                 summary.dropdown-trigger Profile
                 ul.dropdown-menu
                   li.dropdown-menu-item
-                    a href="/login" Login
+                    a href="/sessions/new" Login
                   li.dropdown-menu-item
-                    a href="/register" Register
+                    a href="/users/new" Register
       .div9
         section.content
           == yield

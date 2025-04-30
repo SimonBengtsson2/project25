@@ -1,20 +1,17 @@
-h1 Settings
-form action="/update_settings" method="post"
+h1 Account Settings
+- if @error
+  div.error-message
+    p = @error
+- if @message
+  div.success-message
+    p = @message
+form action="/users/edit" method="post"
   label for="username" Username:
-  input type="text" name="username" id="username" value="#{@user['username']}" required
-
+  input type="text" name="username" id="username" value="#{@user['username']}"
   label for="password" Password (leave blank to keep current password):
   input type="password" name="password" id="password"
-
-  label for="profile_picture" Profile Picture URL:
-  input type="text" name="profile_picture" id="profile_picture" value="#{@user['profile_picture']}"
-
-  button type="submit" Update Settings
+  button type="submit" Save Changes
 
 hr
 
-form action="/delete_user" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')"
-  button type="submit" class="delete-button" Delete Account
-
-p
-  a href="/logout" Logout
+a href="/users/upgrade" class="button" Upgrade to Admin

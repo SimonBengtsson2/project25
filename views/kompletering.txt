@@ -1,12 +1,14 @@
-komplettering (C): Finslipa namngivning av routes enligt Restful. 
-Vanliga misstag är att man tex skriver POST('/albums/new') istället 
-för POST('/albums') då man vill lägga till en resurs. Säkra upp 
+komplettering (C): Säkra upp 
 användares routes mha tex before-block. Undvik att användare kan ta
  bort/updata varandras resurser genom att kontrollera att det är samma
  användare som är inloggad som även äger den aktuella resursen. 
  Validering saknas (kontrollera exempelvis att formulärsfält inte är 
  tomma, emil-adress innehåller "@" etc). (B): Lägg till behörighetssystem 
- (guest-user-admin) med olika behörighet på sidan. Påbörja MVC. 
-(A): Fullt MVC, Cooldown, On Delete Cascade-liknande funktionalitet, 
-Yardoc samt mer detaljerad dokumentation i skrivmallen där 
-processen beskrivs mer detaljerat.
+ (guest-user-admin) med olika behörighet på sidan. samt MVC. 
+
+
+
+Fixa admin logic 
+
+fixa merge kort problemet  
+lägg till valedering

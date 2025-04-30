@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Function to update the card image based on the selected option
     const updateCardImage = (selectElement) => {
       const selectedOption = selectElement.options[selectElement.selectedIndex];
       const imageTargetId = selectElement.dataset.imageTarget;
@@ -51,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   
-    // Attach change event listeners to all select elements
     const selectElements = document.querySelectorAll('select[data-image-target]');
     selectElements.forEach((selectElement) => {
       selectElement.addEventListener('change', () => updateCardImage(selectElement));

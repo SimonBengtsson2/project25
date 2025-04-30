@@ -1,0 +1,15 @@
+h1 Upgrade to Admin
+- if @error
+  div.error-message
+    p = @error
+- if @message
+  div.success-message
+    p = @message
+form action="/users/upgrade" method="post"
+  label for="admin_key" Admin Key:
+  input type="text" name="admin_key" id="admin_key"
+  button type="submit" Upgrade
+
+hr
+
+a href="/users/edit" class="button" Back to Settings
