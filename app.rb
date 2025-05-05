@@ -47,8 +47,14 @@ before '/admin/*' do
 end
 # Ensure the user owns the resource before updating or deleting it
 before '/resources/:id/*' do
-  resource = find_resource(params[:id]) # Replace with your resource lookup logic
+  resource = find_resource(params[:id])
   halt 403, "Forbidden" unless resource['user_id'] == session[:user_id]
+end
+before do
+  protected_routes = ['/cards', '/cards/merge', '/admin/cards', '/admin/cards/add', '/admin/cards/remove']
+  if protected_routes.include?(request.path_info) && session[:user_id].nil?
+    redirect '/sessions/new'
+  end
 end
 
 # Home route
@@ -139,7 +145,8 @@ post '/cards/merge' do
   errors = validate_presence(params, ['card_id_1', 'card_id_2', 'card_id_3'])
   if errors.any?
     @error = "You must select 3 cards to merge."
-    redirect '/cards/merge'
+    @user_cards = all_cards_for_user(session[:user_id]) # Ensure user cards are available for the view
+    slim :merge, layout: :layout
   else
     card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
 
@@ -149,7 +156,8 @@ post '/cards/merge' do
 
     unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
       @error = "You must select three identical cards to merge."
-      redirect '/cards/merge'
+      @user_cards = all_cards_for_user(session[:user_id]) # Ensure user cards are available for the view
+      slim :merge, layout: :layout
     end
 
     card = cards.first
@@ -157,7 +165,8 @@ post '/cards/merge' do
     # Check if the user owns the selected cards and has enough quantity
     unless can_merge_cards?(session[:user_id], card_ids)
       @error = "You do not have enough of the selected card to merge."
-      redirect '/cards/merge'
+      @user_cards = all_cards_for_user(session[:user_id]) # Ensure user cards are available for the view
+      slim :merge, layout: :layout
     end
 
     # Deduct the selected cards from the user's collection
@@ -167,7 +176,8 @@ post '/cards/merge' do
     next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
     if next_tier_card.nil?
       @error = "Next tier card does not exist."
-      redirect '/cards/merge'
+      @user_cards = all_cards_for_user(session[:user_id]) # Ensure user cards are available for the view
+      slim :merge, layout: :layout
     end
 
     add_card_to_collection(session[:user_id], next_tier_card['card_id'])
@@ -186,9 +196,7 @@ get '/cards' do
   slim :collection, layout: :layout
 end
 
-get '/admin/dashboard' do
-  slim :admin_dashboard, layout: :layout
-end
+
 get '/users/edit' do
   redirect '/sessions/new' unless session[:user_id]
 
@@ -243,7 +251,9 @@ post '/admin/cards/add' do
   errors = validate_presence(params, ['card_id', 'quantity'])
   if errors.any?
     @error = "You must select a card and specify a quantity to add."
-    redirect '/admin/cards'
+    @cards = all_cards_for_user(session[:user_id]) # Ensure admin's cards are available for the view
+    @all_cards = DB.execute("SELECT * FROM Card") # Fetch all cards for the dropdown
+    slim :admin_cards, layout: :layout
   else
     card_id = params[:card_id].to_i
     quantity = params[:quantity].to_i
@@ -252,13 +262,13 @@ post '/admin/cards/add' do
     redirect '/admin/cards'
   end
 end
-# Remove a card from the admin's collection
 post '/admin/cards/remove' do
   errors = validate_presence(params, ['card_id', 'quantity'])
   if errors.any?
     @error = "You must select a card and specify a quantity to remove."
-  
-    redirect '/admin/cards'
+    @cards = all_cards_for_user(session[:user_id]) # Ensure admin's cards are available for the view
+    @all_cards = DB.execute("SELECT * FROM Card") # Fetch all cards for the dropdown
+    slim :admin_cards, layout: :layout
   else
     card_id = params[:card_id].to_i
     quantity = params[:quantity].to_i

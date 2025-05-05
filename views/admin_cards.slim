@@ -1,5 +1,9 @@
 h1 Admin Card Management
 
+- if @error
+  div.error-message
+    p = @error
+
 h2 Your Collection
 table
   thead
@@ -18,8 +22,11 @@ h2 Add Cards to Collection
 form action="/admin/cards/add" method="post"
   label for="card_id" Select Card:
   select name="card_id" id="card_id"
-    - DB.execute("SELECT * FROM Card").each do |card|
-      option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+    - if @all_cards && @all_cards.any?
+      - @all_cards.each do |card|
+        option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+    - else
+      option value="" = "No cards available"
   label for="quantity" Quantity:
   input type="number" name="quantity" id="quantity" min="1" value="1"
   button type="submit" Add Card
