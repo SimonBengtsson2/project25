@@ -104,9 +104,14 @@ post '/users' do
     @error = errors.join(", ")
     slim :register, layout: :layout
   else
-    role = params[:admin_key] == ADMIN_KEY ? 'admin' : 'user'
-    create_user(params[:username], params[:password], params[:email], role)
-    redirect '/sessions/new'
+    existing_user = DB.execute("SELECT * FROM User WHERE username = ?", [params[:username]]).first
+    if existing_user
+      @error = "Username taken. Please choose another one."
+      slim :register, layout: :layout
+    else
+      create_user(params[:username], params[:password], 'user') # Default role is 'user'
+      redirect '/sessions/new'
+    end
   end
 end
 # Pack opening page
