@@ -25,6 +25,9 @@ html
                 ul.dropdown-menu
                   li.dropdown-menu-item
                     a href="/users/edit" Settings
+                  - if current_user['role'] == 'admin'
+                    li.dropdown-menu-item
+                      a href="/admin/cards" Admin Page
                   li.dropdown-menu-item
                     form action="/sessions" method="post"
                       input type="hidden" name="_method" value="delete"

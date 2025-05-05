@@ -13,7 +13,20 @@ helpers do
     errors << "Email must contain @" unless params[:email].include?("@")
     errors
   end
-
+  helpers do
+    def validate_presence(params, required_fields)
+      errors = []
+      required_fields.each do |field|
+        errors << "#{field.capitalize} cannot be empty" if params[field].nil? || params[field].strip.empty?
+      end
+      errors
+    end
+  end
+  helpers do
+    def current_user
+      @current_user ||= find_user_by_id(session[:user_id])
+    end
+  end
 # Ensure the user is logged in before accessing protected routes
 
 
@@ -49,20 +62,25 @@ end
 
 # Log in (create session)
 post '/sessions' do
-  username = params[:username]
-  password = params[:password]
-
-  user = find_user_by_username(username)
-
-  if user && BCrypt::Password.new(user['password']) == password
-    session[:user_id] = user['user_id']
-    redirect '/cards'
-  else
-    @error = "Invalid username or password."
+  errors = validate_presence(params, ['username', 'password'])
+  if errors.any?
+    @error = errors.join(", ")
     slim :login, layout: :layout
+  else
+    username = params[:username]
+    password = params[:password]
+
+    user = find_user_by_username(username)
+
+    if user && BCrypt::Password.new(user['password']) == password
+      session[:user_id] = user['user_id']
+      redirect '/cards'
+    else
+      @error = "Invalid username or password."
+      slim :login, layout: :layout
+    end
   end
 end
-
 # Log out (delete session)
 delete '/sessions' do
   session.clear
@@ -75,7 +93,7 @@ end
 
 # Register a new user
 post '/users' do
-  errors = validate_registration(params)
+  errors = validate_presence(params, ['username', 'password'])
   if errors.any?
     @error = errors.join(", ")
     slim :register, layout: :layout
@@ -118,43 +136,47 @@ end
 
 # Merge cards
 post '/cards/merge' do
-  redirect '/sessions/new' unless session[:user_id]
-
-  card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
-
-  # Ensure all selected cards are the same
-  placeholders = (["?"] * card_ids.size).join(", ")
-  cards = DB.execute("SELECT * FROM Card WHERE card_id IN (#{placeholders})", card_ids)
-
-  unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
-    @error = "You must select three identical cards to merge."
+  errors = validate_presence(params, ['card_id_1', 'card_id_2', 'card_id_3'])
+  if errors.any?
+    @error = "You must select 3 cards to merge."
     redirect '/cards/merge'
+  else
+    card_ids = [params[:card_id_1], params[:card_id_2], params[:card_id_3]].map(&:to_i)
+
+    # Ensure all selected cards are the same
+    placeholders = (["?"] * card_ids.size).join(", ")
+    cards = DB.execute("SELECT * FROM Card WHERE card_id IN (#{placeholders})", card_ids)
+
+    unless cards.uniq { |card| [card['card_name'], card['stars']] }.size == 1
+      @error = "You must select three identical cards to merge."
+      redirect '/cards/merge'
+    end
+
+    card = cards.first
+
+    # Check if the user owns the selected cards and has enough quantity
+    unless can_merge_cards?(session[:user_id], card_ids)
+      @error = "You do not have enough of the selected card to merge."
+      redirect '/cards/merge'
+    end
+
+    # Deduct the selected cards from the user's collection
+    deduct_card_from_collection(session[:user_id], card_ids.first, 3)
+
+    # Add the next-tier card to the user's collection
+    next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
+    if next_tier_card.nil?
+      @error = "Next tier card does not exist."
+      redirect '/cards/merge'
+    end
+
+    add_card_to_collection(session[:user_id], next_tier_card['card_id'])
+
+    # Pass data to the view
+    @merged_cards = [card] * 3
+    @result_card = next_tier_card
+    slim :merge_result, layout: :layout
   end
-
-  card = cards.first
-
-  # Check if the user owns the selected cards and has enough quantity
-  unless can_merge_cards?(session[:user_id], card_ids)
-    @error = "You do not have enough of the selected card to merge."
-    redirect '/cards/merge'
-  end
-
-  # Deduct the selected cards from the user's collection
-  deduct_card_from_collection(session[:user_id], card_ids.first, 3)
-
-  # Add the next-tier card to the user's collection
-  next_tier_card = DB.execute("SELECT * FROM Card WHERE card_name = ? AND stars = ?", [card['card_name'], card['stars'] + 1]).first
-  if next_tier_card.nil?
-    @error = "Next tier card does not exist."
-    redirect '/cards/merge'
-  end
-
-  add_card_to_collection(session[:user_id], next_tier_card['card_id'])
-
-  # Pass data to the view
-  @merged_cards = [card] * 3
-  @result_card = next_tier_card
-  slim :merge_result, layout: :layout
 end
 # View card collection
 get '/cards' do
@@ -174,11 +196,7 @@ get '/users/edit' do
   slim :settings, layout: :layout
 end
 post '/users/edit' do
-  redirect '/sessions/new' unless session[:user_id]
-
-  errors = []
-  errors << "Username cannot be empty" if params[:username].strip.empty?
-
+  errors = validate_presence(params, ['username'])
   if errors.any?
     @error = errors.join(", ")
     @user = current_user
@@ -197,13 +215,55 @@ end
 
 # Route to handle admin upgrade
 post '/users/upgrade' do
-  redirect '/sessions/new' unless session[:user_id]
-
-  if params[:admin_key] == ADMIN_KEY
-    DB.execute("UPDATE User SET role = 'admin' WHERE user_id = ?", [session[:user_id]])
-    @message = "You are now an admin!"
+  errors = validate_presence(params, ['admin_key'])
+  if errors.any?
+    @error = errors.join(", ")
+    slim :upgrade, layout: :layout
   else
-    @error = "Invalid admin key."
+    if params[:admin_key] == ADMIN_KEY
+      DB.execute("UPDATE User SET role = 'admin' WHERE user_id = ?", [session[:user_id]])
+      @message = "You are now an admin!"
+    else
+      @error = "Invalid admin key."
+    end
+    slim :upgrade, layout: :layout
   end
-  slim :upgrade, layout: :layout
+end
+# Admin page to manage card collection
+get '/admin/cards' do
+  redirect '/sessions/new' unless session[:user_id]
+  halt 403, "Forbidden" unless current_user['role'] == 'admin'
+
+  @cards = all_cards_for_user(session[:user_id]) # Fetch admin's cards
+  slim :admin_cards, layout: :layout
+end
+
+# Add a card to the admin's collection
+post '/admin/cards/add' do
+  errors = validate_presence(params, ['card_id', 'quantity'])
+  if errors.any?
+    @error = "You must select a card and specify a quantity to add."
+    redirect '/admin/cards'
+  else
+    card_id = params[:card_id].to_i
+    quantity = params[:quantity].to_i
+
+    add_card_to_collection(session[:user_id], card_id, quantity)
+    redirect '/admin/cards'
+  end
+end
+# Remove a card from the admin's collection
+post '/admin/cards/remove' do
+  errors = validate_presence(params, ['card_id', 'quantity'])
+  if errors.any?
+    @error = "You must select a card and specify a quantity to remove."
+  
+    redirect '/admin/cards'
+  else
+    card_id = params[:card_id].to_i
+    quantity = params[:quantity].to_i
+
+    deduct_card_from_collection(session[:user_id], card_id, quantity)
+    redirect '/admin/cards'
+  end
 end

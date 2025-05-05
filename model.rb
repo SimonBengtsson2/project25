@@ -93,3 +93,33 @@ def all_cards_for_user(user_id)
       eligible_cards.sample
     end.compact
   end
+
+  def add_card_to_collection(user_id, card_id, quantity)
+    existing_card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id]).first
+  
+    if existing_card
+      DB.execute("UPDATE Collection SET quantity = quantity + ? WHERE user_id = ? AND card_id = ?", [quantity, user_id, card_id])
+    else
+      DB.execute("INSERT INTO Collection (user_id, card_id, quantity) VALUES (?, ?, ?)", [user_id, card_id, quantity])
+    end
+  end
+  
+  def deduct_card_from_collection(user_id, card_id, quantity)
+    existing_card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id]).first
+  
+    if existing_card && existing_card['quantity'] > quantity
+      DB.execute("UPDATE Collection SET quantity = quantity - ? WHERE user_id = ? AND card_id = ?", [quantity, user_id, card_id])
+    elsif existing_card && existing_card['quantity'] == quantity
+      DB.execute("DELETE FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id])
+    else
+      raise "Not enough cards to remove"
+    end
+  end
+  def find_user_by_id(user_id)
+    DB.execute("SELECT * FROM User WHERE user_id = ?", [user_id]).first
+  end
+  def authorized?(required_role)
+    return false unless current_user # Return false if no user is logged in
+    roles = { guest: 0, user: 1, admin: 2 }
+    roles[current_user['role'].to_sym] >= roles[required_role]
+  end

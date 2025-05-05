@@ -8,7 +8,3 @@ användares routes mha tex before-block. Undvik att användare kan ta
 
 
 
-Fixa admin logic 
-
-fixa merge kort problemet  
-lägg till valedering

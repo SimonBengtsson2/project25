@@ -1,0 +1,35 @@
+h1 Admin Card Management
+
+h2 Your Collection
+table
+  thead
+    tr
+      th Card Name
+      th Stars
+      th Quantity
+  tbody
+    - @cards.each do |card|
+      tr
+        td = card['card_name']
+        td = card['stars']
+        td = card['quantity']
+
+h2 Add Cards to Collection
+form action="/admin/cards/add" method="post"
+  label for="card_id" Select Card:
+  select name="card_id" id="card_id"
+    - DB.execute("SELECT * FROM Card").each do |card|
+      option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+  label for="quantity" Quantity:
+  input type="number" name="quantity" id="quantity" min="1" value="1"
+  button type="submit" Add Card
+
+h2 Remove Cards from Collection
+form action="/admin/cards/remove" method="post"
+  label for="card_id" Select Card:
+  select name="card_id" id="card_id"
+    - @cards.each do |card|
+      option value="#{card['card_id']}" = "#{card['card_name']} (#{card['stars']} stars)"
+  label for="quantity" Quantity:
+  input type="number" name="quantity" id="quantity" min="1" value="1"
+  button type="submit" Remove Card
