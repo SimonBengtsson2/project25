@@ -51,8 +51,9 @@ def find_collection_by_user_and_card(user_id, card_id)
   DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id]).first
 end
 
-def add_card_to_collection(user_id, card_id, quantity = 1)
-  existing_card = find_collection_by_user_and_card(user_id, card_id)
+def add_card_to_collection(user_id, card_id, quantity)
+  existing_card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id]).first
+
   if existing_card
     DB.execute("UPDATE Collection SET quantity = quantity + ? WHERE user_id = ? AND card_id = ?", [quantity, user_id, card_id])
   else
@@ -60,10 +61,20 @@ def add_card_to_collection(user_id, card_id, quantity = 1)
   end
 end
 
-def deduct_card_from_collection(user_id, card_id, quantity)
-  DB.execute("UPDATE Collection SET quantity = quantity - ? WHERE user_id = ? AND card_id = ?", [quantity, user_id, card_id])
-end
 
+
+
+def deduct_card_from_collection(user_id, card_id, quantity)
+  existing_card = DB.execute("SELECT * FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id]).first
+
+  if existing_card && existing_card['quantity'] > quantity
+    DB.execute("UPDATE Collection SET quantity = quantity - ? WHERE user_id = ? AND card_id = ?", [quantity, user_id, card_id])
+  elsif existing_card && existing_card['quantity'] == quantity
+    DB.execute("DELETE FROM Collection WHERE user_id = ? AND card_id = ?", [user_id, card_id])
+  else
+    raise "Not enough cards to remove"
+  end
+end
 def all_cards_for_user(user_id)
     DB.execute("
       SELECT Card.card_id, Card.card_name, Card.stars, Card.picture, COALESCE(Collection.quantity, 0) AS quantity

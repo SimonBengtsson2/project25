@@ -131,13 +131,12 @@ post '/packs' do
   random_cards = generate_random_cards(probabilities, 10)
 
   random_cards.each do |card|
-    add_card_to_collection(session[:user_id], card['card_id'])
+    add_card_to_collection(session[:user_id], card['card_id'], 1) # Default quantity is 1
   end
 
   @new_cards = random_cards
   slim :pack_result, layout: :layout
 end
-
 get '/cards/merge' do
   redirect '/sessions/new' unless session[:user_id]
 
@@ -185,7 +184,7 @@ post '/cards/merge' do
       slim :merge, layout: :layout
     end
 
-    add_card_to_collection(session[:user_id], next_tier_card['card_id'])
+    add_card_to_collection(session[:user_id], next_tier_card['card_id'], 1) # Pass quantity as 1
 
     # Pass data to the view
     @merged_cards = [card] * 3
@@ -248,6 +247,7 @@ get '/admin/cards' do
   halt 403, "Forbidden" unless current_user['role'] == 'admin'
 
   @cards = all_cards_for_user(session[:user_id]) # Fetch admin's cards
+  @all_cards = DB.execute("SELECT * FROM Card") # Fetch all cards for the dropdown
   slim :admin_cards, layout: :layout
 end
 
@@ -271,14 +271,19 @@ post '/admin/cards/remove' do
   errors = validate_presence(params, ['card_id', 'quantity'])
   if errors.any?
     @error = "You must select a card and specify a quantity to remove."
-    @cards = all_cards_for_user(session[:user_id]) # Ensure admin's cards are available for the view
-    @all_cards = DB.execute("SELECT * FROM Card") # Fetch all cards for the dropdown
-    slim :admin_cards, layout: :layout
   else
     card_id = params[:card_id].to_i
     quantity = params[:quantity].to_i
 
-    deduct_card_from_collection(session[:user_id], card_id, quantity)
-    redirect '/admin/cards'
+    begin
+      deduct_card_from_collection(session[:user_id], card_id, quantity)
+      redirect '/admin/cards'
+    rescue RuntimeError => e
+      @error = e.message # Capture the "Not enough cards to remove" error
+    end
   end
+
+  @cards = all_cards_for_user(session[:user_id]) # Ensure admin's cards are available for the view
+  @all_cards = DB.execute("SELECT * FROM Card") # Fetch all cards for the dropdown
+  slim :admin_cards, layout: :layout
 end
