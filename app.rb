@@ -10,7 +10,7 @@ helpers do
     errors = []
     errors << "Username cannot be empty" if params[:username].strip.empty?
     errors << "Password cannot be empty" if params[:password].strip.empty?
-    errors << "Email must contain @" unless params[:email].include?("@")
+    
     errors
   end
   helpers do
